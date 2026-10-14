@@ -22,16 +22,11 @@
     <ClInclude Include="Shader.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shader\core.vs" />
-    <None Include="Shader\core.frag" />
-    <None Include="Shader\core.vs" />
-    <None Include="Shader\lamp.frag" />
-    <None Include="Shader\lamp.vs" />
-    <None Include="Shader\lighting.frag" />
-    <None Include="Shader\lighting.vs" />
+    <ClCompile Include="Main_Dibujo2D.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Iluminacion.cpp" />
+    <None Include="Shader\core.frag" />
+    <None Include="Shader\core.vs" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
