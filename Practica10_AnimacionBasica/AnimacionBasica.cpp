@@ -124,6 +124,14 @@ const float JUMP_DURATION = 0.7f;  // segundos que dura el salto
 const float JUMP_HEIGHT = 0.35f; // altura maxima del salto
 glm::vec3 jumpStart, jumpEnd;      // donde empieza y donde termina el salto
 float prevDiff = -180.0f;          // diferencia de angulos del cuadro anterior (para detectar el encuentro)
+// ===== PARTE 3: tiro parabolico de la pelota =====
+bool  ballFlying = false;          // la pelota va por el aire
+bool  ballKicked = false;          // la pelota ya fue pateada (ya no gira en circulo)
+glm::vec3 ballVel(0.0f);           // velocidad de la pelota
+const float GRAVITY = 9.8f;        // gravedad
+const float KICK_SPEED_H = 1.2f;   // velocidad horizontal del golpe
+const float KICK_SPEED_V = 3.5f;   // velocidad vertical del golpe
+const float BALL_GROUND = -0.384f + 0.151f;  // altura del piso + radio de la pelota
 // Deltatime
 GLfloat deltaTime = 0.0f;	// Tiempo entre el frame actual y el anterior
 GLfloat lastFrame = 0.0f;  	// Tiempo del frame anterior
@@ -364,9 +372,18 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
 			Light1 = glm::vec3(0);                  // luz apagada
 	}
 
-	if (key == GLFW_KEY_N && action == GLFW_PRESS)
+	if (key == GLFW_KEY_N && action == GLFW_PRESS && !ballKicked)
 	{
 		AnimBall = !AnimBall;
+	}
+
+	// R = todo regresa al inicio para repetir la animacion
+	if (key == GLFW_KEY_R && action == GLFW_PRESS)
+	{
+		AnimBall = false; dogJumping = false; ballFlying = false; ballKicked = false;
+		rotBall = 0.0f;  rotDog = 180.0f;  prevDiff = -180.0f;
+		ballPos = glm::vec3(0.0f, BALL_CENTER.y, BALL_RADIUS); ballSpin = 0.0f;
+		dogPos = glm::vec3(0.0f, 0.0f, -DOG_RADIUS); dogYaw = 90.0f;
 	}
 }
 
@@ -403,7 +420,7 @@ void Animation()
 		while (diff <= -180.0f) diff += 360.0f;
 
 		// la diferencia paso de negativa a positiva -> se encuentran: el perro SALTA
-		if (!dogJumping && prevDiff < 0.0f && diff >= 0.0f && diff < 90.0f)
+		if (!dogJumping && !ballKicked && prevDiff < 0.0f && diff >= 0.0f && diff < 90.0f)
 		{
 			float f = glm::radians(futuro);
 			glm::vec3 punto(BALL_RADIUS * sin(f), 0.0f, BALL_RADIUS * cos(f)); // donde estara la pelota
@@ -433,8 +450,42 @@ void Animation()
 		if (t >= 1.0f)                       // termino el salto
 		{
 			dogJumping = false;
-			AnimBall = false;              // por ahora se detiene todo (en el paso C aqui va el golpe)
+
+			// PARTE 3: el perro le pega a la pelota -> velocidad inicial del tiro
+			glm::vec3 dir = ballPos - dogPos;
+			dir.y = 0.0f;
+			dir = glm::normalize(dir);
+
+			ballVel = dir * KICK_SPEED_H + glm::vec3(0.0f, KICK_SPEED_V, 0.0f);
+			AnimBall = false;              // la pelota deja de girar en circulo
+			ballFlying = true;
+			ballKicked = true;
 		}
+	}
+
+	// ===== PARTE 3: tiro parabolico de la pelota =====
+	if (ballFlying)
+	{
+		ballVel.y -= GRAVITY * deltaTime;    // la gravedad reduce la velocidad en Y
+		ballPos += ballVel * deltaTime;    // avanza la posicion
+		ballSpin += 360.0f * deltaTime;     // gira mientras vuela
+
+		if (ballPos.y <= BALL_GROUND)        // toca el piso
+		{
+			ballPos.y = BALL_GROUND;
+			ballVel.y = -ballVel.y * 0.5f;   // rebota con la mitad de velocidad
+			ballVel.x *= 0.7f;               // friccion
+			ballVel.z *= 0.7f;
+			if (ballVel.y < 0.4f)            // rebote muy pequeno: se detiene
+				ballFlying = false;
+		}
+
+		// "pared invisible": la pelota no sale del piso (el piso mide 5 x 5)
+		const float LIMITE = 2.5f - 0.151f;
+		if (ballPos.x > LIMITE) { ballPos.x = LIMITE; ballVel.x = -ballVel.x * 0.5f; }
+		if (ballPos.x < -LIMITE) { ballPos.x = -LIMITE; ballVel.x = -ballVel.x * 0.5f; }
+		if (ballPos.z > LIMITE) { ballPos.z = LIMITE; ballVel.z = -ballVel.z * 0.5f; }
+		if (ballPos.z < -LIMITE) { ballPos.z = -LIMITE; ballVel.z = -ballVel.z * 0.5f; }
 	}
 }
 
