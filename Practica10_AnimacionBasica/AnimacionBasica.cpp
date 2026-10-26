@@ -109,13 +109,21 @@ const float LIGHT_SPEED = 1.5f;    // unidades por segundo al mover la luz
 
 // el perro gira en sentido contrario a la pelota =====
 const glm::vec3 BALL_CENTER(0.0f, 0.3125f, 0.47f); // centro de la pelota dentro de ball.obj
-const float DOG_RADIUS = 1.0f;     // radio del circulo por donde camina el perro
+const float BALL_RADIUS = 1.4f;    // radio del circulo de la pelota (el de afuera)
+const float DOG_RADIUS = 0.7f;    // radio del circulo del perro (el de adentro)
+const float DOG_SPEED = 45.0f;   // grados por segundo: el perro va mas lento que la pelota
 float rotDog = 180.0f;             // angulo del perro (empieza del lado opuesto a la pelota)
-glm::vec3 dogPos(0.0f, 0.0f, -1.0f);  // posicion del perro en el mundo
+glm::vec3 dogPos(0.0f, 0.0f, -DOG_RADIUS);            // posicion del perro en el mundo
 float dogYaw = 90.0f;              // hacia donde mira el perro (grados en Y)
-glm::vec3 ballPos = BALL_CENTER;   // posicion del centro de la pelota en el mundo
+glm::vec3 ballPos(0.0f, BALL_CENTER.y, BALL_RADIUS);  // posicion del centro de la pelota
 float ballSpin = 0.0f;             // giro de la pelota sobre si misma
-
+// ===== PARTE 2: salto del perro =====
+bool  dogJumping = false;          // el perro esta saltando
+float jumpTime = 0.0f;           // tiempo transcurrido del salto
+const float JUMP_DURATION = 0.7f;  // segundos que dura el salto
+const float JUMP_HEIGHT = 0.35f; // altura maxima del salto
+glm::vec3 jumpStart, jumpEnd;      // donde empieza y donde termina el salto
+float prevDiff = -180.0f;          // diferencia de angulos del cuadro anterior (para detectar el encuentro)
 // Deltatime
 GLfloat deltaTime = 0.0f;	// Tiempo entre el frame actual y el anterior
 GLfloat lastFrame = 0.0f;  	// Tiempo del frame anterior
@@ -365,25 +373,68 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
 // Actualiza las variables de animacion en cada frame
 void Animation()
 {
-	// pelota y perro giran en sentidos contrarios
+	// ===== PARTE 1: pelota y perro giran en sentidos contrarios =====
 	if (AnimBall)
 	{
-		rotBall += BALL_SPEED * deltaTime;   // pelota: sentido positivo
+		rotBall += BALL_SPEED * deltaTime;   // pelota: sentido positivo (mas rapida)
 		if (rotBall >= 360.0f) rotBall -= 360.0f;
 		printf("%f", rotBall);
 
-		rotDog -= BALL_SPEED * deltaTime;    // perro: sentido contrario
-		if (rotDog < 0.0f) rotDog += 360.0f;
-
-		// posicion de la pelota: su centro girado rotBall grados alrededor del eje Y
-		glm::mat4 r = glm::rotate(glm::mat4(1), glm::radians(rotBall), glm::vec3(0.0f, 1.0f, 0.0f));
-		ballPos = glm::vec3(r * glm::vec4(BALL_CENTER, 1.0f));
+		// posicion de la pelota sobre su circulo (radio grande)
+		float b = glm::radians(rotBall);
+		ballPos = glm::vec3(BALL_RADIUS * sin(b), BALL_CENTER.y, BALL_RADIUS * cos(b));
 		ballSpin = rotBall;
 
-		// posicion del perro: punto (0,0,DOG_RADIUS) girado rotDog grados
-		float a = glm::radians(rotDog);
-		dogPos = glm::vec3(DOG_RADIUS * sin(a), 0.0f, DOG_RADIUS * cos(a));
-		dogYaw = rotDog - 90.0f;             // mira hacia donde camina
+		if (!dogJumping)                     // mientras salta, el perro deja de caminar
+		{
+			rotDog -= DOG_SPEED * deltaTime; // perro: sentido contrario (mas lento)
+			if (rotDog < 0.0f) rotDog += 360.0f;
+
+			float a = glm::radians(rotDog);
+			dogPos = glm::vec3(DOG_RADIUS * sin(a), 0.0f, DOG_RADIUS * cos(a));
+			dogYaw = rotDog - 90.0f;         // mira hacia donde camina
+		}
+
+		// ===== PARTE 2: detectar el encuentro =====
+		// angulo donde estara la pelota cuando el perro termine de saltar
+		float futuro = rotBall + BALL_SPEED * JUMP_DURATION;
+		float diff = futuro - rotDog;        // diferencia de angulos, ajustada a (-180, 180]
+		while (diff > 180.0f) diff -= 360.0f;
+		while (diff <= -180.0f) diff += 360.0f;
+
+		// la diferencia paso de negativa a positiva -> se encuentran: el perro SALTA
+		if (!dogJumping && prevDiff < 0.0f && diff >= 0.0f && diff < 90.0f)
+		{
+			float f = glm::radians(futuro);
+			glm::vec3 punto(BALL_RADIUS * sin(f), 0.0f, BALL_RADIUS * cos(f)); // donde estara la pelota
+			glm::vec3 dir = punto - dogPos;
+			dir.y = 0.0f;
+			dir = glm::normalize(dir);
+
+			jumpStart = dogPos;
+			jumpEnd = punto - dir * 0.35f;                 // cae justo antes de la pelota
+			dogYaw = glm::degrees(atan2(dir.x, dir.z));   // mira hacia la pelota
+			jumpTime = 0.0f;
+			dogJumping = true;
+		}
+		prevDiff = diff;
+	}
+
+	// ===== PARTE 2: salto del perro (parabola en Y) =====
+	if (dogJumping)
+	{
+		jumpTime += deltaTime;
+		float t = jumpTime / JUMP_DURATION;  // va de 0 a 1
+		if (t > 1.0f) t = 1.0f;
+
+		dogPos = glm::mix(jumpStart, jumpEnd, t);        // avanza en X y Z
+		dogPos.y = 4.0f * JUMP_HEIGHT * t * (1.0f - t);    // sube y baja (0 -> max -> 0)
+
+		if (t >= 1.0f)                       // termino el salto
+		{
+			dogJumping = false;
+			AnimBall = false;              // por ahora se detiene todo (en el paso C aqui va el golpe)
+		}
 	}
 }
 
