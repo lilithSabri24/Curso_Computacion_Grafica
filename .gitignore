@@ -399,3 +399,5 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+# Incluir modelos 3D de las practicas
+!**/Models/*.obj
