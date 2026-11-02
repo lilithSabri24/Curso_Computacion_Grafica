@@ -142,6 +142,9 @@ const int NUM_PUNTOS = 6;
 int destino = 0;                       // indice del punto al que se dirige el perro
 float rotObjetivo = 0.0f;              // angulo hacia el que debe girar el cuerpo
 const float TURN_SPEED = 90.0f;        // grados por segundo que gira el cuerpo
+float headYaw = 0.0f;                  // giro de la cabeza hacia los lados (eje Y)
+const float HEAD_MAX = 40.0f;        // lo maximo que voltea la cabeza
+const float HEAD_SPEED = 80.0f;        // grados por segundo que gira la cabeza
 // Deltatime
 GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
 GLfloat lastFrame = 0.0f;  	// Time of last frame
@@ -340,6 +343,7 @@ int main()
 		//Head
 		model = modelTemp;
 		model = glm::translate(model, glm::vec3(0.0f, 0.093f, 0.208f));
+		model = glm::rotate(model, glm::radians(headYaw), glm::vec3(0.0f, 1.0f, 0.0f)); // voltea hacia los lados
 		model = glm::rotate(model, glm::radians(head), glm::vec3(0.0f, 0.0f, 1.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		HeadDog.Draw(lightingShader);
@@ -575,7 +579,7 @@ void PrepararGiro()
 	if (fabs(DiferenciaAngulo(dogRot, rotObjetivo)) < 1.0f)
 		dogAnim = 1;                                    // ya mira hacia alla: camina
 	else
-		dogAnim = 3;                                    // necesita girar el cuerpo
+		dogAnim = 2;                                    // necesita girar el cuerpo
 }
 
 void Animation() {
@@ -610,6 +614,19 @@ void Animation() {
 			dogPos += dir / distancia * avance;          // avanza en linea recta hacia el destino
 		}
 	}
+	// Estado 2: la cabeza voltea primero hacia la nueva direccion
+	else if (dogAnim == 2)
+	{
+		float meta = glm::clamp(DiferenciaAngulo(dogRot, rotObjetivo), -HEAD_MAX, HEAD_MAX);
+		float paso = HEAD_SPEED * deltaTime;
+		if (fabs(meta - headYaw) <= paso)
+		{
+			headYaw = meta;
+			dogAnim = 3;                                 // la cabeza ya volteo: ahora gira el cuerpo
+		}
+		else
+			headYaw += (meta > headYaw) ? paso : -paso;
+	}
 	// Estado 3: el cuerpo gira hasta quedar alineado con el destino
 	else if (dogAnim == 3)
 	{
@@ -619,18 +636,21 @@ void Animation() {
 		if (fabs(d) <= paso)
 		{
 			dogRot = rotObjetivo;
+			headYaw = 0.0f;
 			dogAnim = 1;                                 // termino el giro: vuelve a caminar
 		}
 		else
 		{
 			dogRot += (d > 0) ? paso : -paso;            // gira un poco hacia el lado mas corto
+			// la cabeza sigue mirando al destino mientras el cuerpo la alcanza
+			headYaw = glm::clamp(DiferenciaAngulo(dogRot, rotObjetivo), -HEAD_MAX, HEAD_MAX);
 		}
 	}
 
 	// Estado 0: quieto (idle)
 	if (dogAnim == 0)
 	{
-		RLegs = FLegs = head = tail = 0.0f;
+		RLegs = FLegs = head = tail = headYaw = 0.0f;
 		step = false;
 	}
 }
