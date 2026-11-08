@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <fstream>   // Para guardar y cargar la animacion en un archivo
 
 // GLEW
 #include <GL/glew.h>
@@ -120,7 +121,7 @@ float bodyRot = 0.0f;    // Inclinacion del cuerpo (para sentarse)
 //KeyFrames
 float dogPosX, dogPosY, dogPosZ;
 
-#define MAX_FRAMES 9
+#define MAX_FRAMES 20
 int i_max_steps = 190;
 int i_curr_steps = 0;
 typedef struct _frame {
@@ -205,6 +206,29 @@ void interpolation(void)
 }
 
 
+
+// ===================== Guardar la animacion =====================
+// Los keyframes se guardan en un archivo de texto: un keyframe por renglon.
+const char* ARCHIVO_ANIMACION = "Animacion.txt";
+
+void guardarAnimacion(void)
+{
+	std::ofstream archivo(ARCHIVO_ANIMACION);
+	if (!archivo.is_open())
+	{
+		printf("No se pudo crear %s\n", ARCHIVO_ANIMACION);
+		return;
+	}
+	for (int i = 0; i < FrameIndex; i++)
+	{
+		archivo << KeyFrame[i].dogPosX << " " << KeyFrame[i].dogPosY << " " << KeyFrame[i].dogPosZ << " "
+			<< KeyFrame[i].rotDog << " " << KeyFrame[i].head << " " << KeyFrame[i].tail << " "
+			<< KeyFrame[i].bodyRot << " " << KeyFrame[i].FLegs << " " << KeyFrame[i].FRightLeg << " "
+			<< KeyFrame[i].RLegs << "\n";
+	}
+	archivo.close();
+	printf("Animacion guardada en %s (%d keyframes)\n", ARCHIVO_ANIMACION, FrameIndex);
+}
 
 // Deltatime
 GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
@@ -718,6 +742,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 		if (FrameIndex < MAX_FRAMES)
 		{
 			saveFrame();
+			guardarAnimacion();   // Cada keyframe nuevo se guarda tambien en el archivo
 		}
 
 	}
