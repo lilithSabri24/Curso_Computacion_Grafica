@@ -143,6 +143,8 @@ typedef struct _frame {
 	float RLegsInc;
 	float bodyRot;    // Inclinacion del cuerpo
 	float bodyRotInc;
+	float tail;       // Rotacion de la cola
+	float tailInc;
 
 }FRAME;
 
@@ -166,6 +168,7 @@ void saveFrame(void)
 	KeyFrame[FrameIndex].FLegs = FLegs;
 	KeyFrame[FrameIndex].RLegs = RLegs;
 	KeyFrame[FrameIndex].bodyRot = bodyRot;
+	KeyFrame[FrameIndex].tail = tail;
 
 	FrameIndex++;
 }
@@ -182,6 +185,7 @@ void resetElements(void)
 	FLegs = KeyFrame[0].FLegs;
 	RLegs = KeyFrame[0].RLegs;
 	bodyRot = KeyFrame[0].bodyRot;
+	tail = KeyFrame[0].tail;
 }
 void interpolation(void)
 {
@@ -196,6 +200,7 @@ void interpolation(void)
 	KeyFrame[playIndex].FLegsInc = (KeyFrame[playIndex + 1].FLegs - KeyFrame[playIndex].FLegs) / i_max_steps;
 	KeyFrame[playIndex].RLegsInc = (KeyFrame[playIndex + 1].RLegs - KeyFrame[playIndex].RLegs) / i_max_steps;
 	KeyFrame[playIndex].bodyRotInc = (KeyFrame[playIndex + 1].bodyRot - KeyFrame[playIndex].bodyRot) / i_max_steps;
+	KeyFrame[playIndex].tailInc = (KeyFrame[playIndex + 1].tail - KeyFrame[playIndex].tail) / i_max_steps;
 
 }
 
@@ -289,6 +294,8 @@ int main()
 		KeyFrame[i].RLegsInc = 0;
 		KeyFrame[i].bodyRot = 0;
 		KeyFrame[i].bodyRotInc = 0;
+		KeyFrame[i].tail = 0;
+		KeyFrame[i].tailInc = 0;
 	}
 
 
@@ -615,6 +622,16 @@ void DoMovement()
 		dogPosY -= 0.002f;
 	}
 
+	// Cola
+	if (keys[GLFW_KEY_6])
+	{
+		tail += 1.0f;
+	}
+	if (keys[GLFW_KEY_7])
+	{
+		tail -= 1.0f;
+	}
+
 	// Camera controls
 	if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP])
 	{
@@ -773,6 +790,7 @@ void Animation() {
 			FLegs += KeyFrame[playIndex].FLegsInc;
 			RLegs += KeyFrame[playIndex].RLegsInc;
 			bodyRot += KeyFrame[playIndex].bodyRotInc;
+			tail += KeyFrame[playIndex].tailInc;
 
 			i_curr_steps++;
 
