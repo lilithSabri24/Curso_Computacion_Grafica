@@ -207,7 +207,7 @@ void interpolation(void)
 
 
 
-// ===================== Guardar la animacion =====================
+// ===================== Guardar / cargar la animacion =====================
 // Los keyframes se guardan en un archivo de texto: un keyframe por renglon.
 const char* ARCHIVO_ANIMACION = "Animacion.txt";
 
@@ -228,6 +228,28 @@ void guardarAnimacion(void)
 	}
 	archivo.close();
 	printf("Animacion guardada en %s (%d keyframes)\n", ARCHIVO_ANIMACION, FrameIndex);
+}
+
+// Lee Animacion.txt y llena el arreglo de keyframes (en el mismo orden en que se guardaron)
+void cargarAnimacion(void)
+{
+	std::ifstream archivo(ARCHIVO_ANIMACION);
+	if (!archivo.is_open())
+	{
+		printf("No hay animacion guardada, graba una con K\n");
+		return;
+	}
+	FrameIndex = 0;
+	while (FrameIndex < MAX_FRAMES &&
+		archivo >> KeyFrame[FrameIndex].dogPosX >> KeyFrame[FrameIndex].dogPosY >> KeyFrame[FrameIndex].dogPosZ
+		>> KeyFrame[FrameIndex].rotDog >> KeyFrame[FrameIndex].head >> KeyFrame[FrameIndex].tail
+		>> KeyFrame[FrameIndex].bodyRot >> KeyFrame[FrameIndex].FLegs >> KeyFrame[FrameIndex].FRightLeg
+		>> KeyFrame[FrameIndex].RLegs)
+	{
+		FrameIndex++;
+	}
+	archivo.close();
+	printf("Animacion cargada de %s (%d keyframes)\n", ARCHIVO_ANIMACION, FrameIndex);
 }
 
 // Deltatime
@@ -320,6 +342,17 @@ int main()
 		KeyFrame[i].bodyRotInc = 0;
 		KeyFrame[i].tail = 0;
 		KeyFrame[i].tailInc = 0;
+	}
+
+	// Cargar la animacion guardada y reproducirla automaticamente
+	cargarAnimacion();
+	if (FrameIndex > 1)
+	{
+		resetElements();
+		interpolation();
+		play = true;
+		playIndex = 0;
+		i_curr_steps = 0;
 	}
 
 
