@@ -32,6 +32,7 @@
 
 // Skybox: carga de texturas y cubemap
 using namespace std;   // Texture.h usa vector y cout sin std::
+#undef STB_IMAGE_IMPLEMENTATION   // Model.h ya incluyo la implementacion de stb_image; evita duplicarla
 #include "Texture.h"
 
 
