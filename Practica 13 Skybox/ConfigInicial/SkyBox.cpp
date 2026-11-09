@@ -670,12 +670,35 @@ int main()
 		glBindVertexArray(0);
 
 
+
+		// ===================== Dibujar SKYBOX (al final) =====================
+		glDepthFunc(GL_LEQUAL);  // Funcion de profundidad: el skybox se queda al fondo de la escena
+		SkyBoxshader.Use();
+		// Matriz de vista sin traslacion para que el cielo siga a la camara
+		view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
+		glUniformMatrix4fv(glGetUniformLocation(SkyBoxshader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(SkyBoxshader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+		glBindVertexArray(skyboxVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindVertexArray(0);
+		glDepthFunc(GL_LESS);    // Regresar la funcion de profundidad a la normal
+
 		// Swap the screen buffers
 		glfwSwapBuffers(window);
 	}
 
 
 
+
+	// Borrar los buffers
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteVertexArrays(1, &skyboxVAO);
+	glDeleteBuffers(1, &skyboxVBO);
+	glDeleteBuffers(1, &skyboxEBO);
 
 	// Terminate GLFW, clearing any resources allocated by GLFW.
 	glfwTerminate();
