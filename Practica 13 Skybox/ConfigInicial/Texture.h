@@ -56,6 +56,7 @@ public:
 	{
 		GLuint textureID;
 		glGenTextures(1, &textureID);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);  // Enlazar el cubemap antes de cargar las caras
 
 		int width, height, nrChannels;
 		for (unsigned int i = 0; i < faces.size(); i++)
