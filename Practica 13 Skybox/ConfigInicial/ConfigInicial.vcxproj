@@ -23,6 +23,7 @@
     <ClInclude Include="..\Model.h" />
     <ClInclude Include="..\stb_image.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Texture.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shader\core.vs" />
@@ -32,9 +33,11 @@
     <None Include="Shader\lamp.vs" />
     <None Include="Shader\lighting.frag" />
     <None Include="Shader\lighting.vs" />
+    <None Include="Shader\SkyBox.frag" />
+    <None Include="Shader\SkyBox.vs" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="KeyFrames.cpp" />
+    <ClCompile Include="SkyBox.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

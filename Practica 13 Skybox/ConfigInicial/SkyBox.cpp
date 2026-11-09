@@ -1,7 +1,7 @@
-//PRÁCTICA 12: ANIMACION POR KEYFRAMMES EN OPEN GL
+//PRÁCTICA 13: SKYBOX EN OPEN GL
 // CRUCES DÍAZ MONSERRAT MARGARITA 
 // GRUPO 7 LAB DE COMPUTACIÓN GRÁFICA 
-//FECHA DE ENTREGA 08 DE 11 DE 2026
+//FECHA DE ENTREGA __ DE 11 DE 2026
 
 #include <iostream>
 #include <cmath>
@@ -29,6 +29,10 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Model.h"
+
+// Skybox: carga de texturas y cubemap
+using namespace std;   // Texture.h usa vector y cout sin std::
+#include "Texture.h"
 
 
 // Function prototypes
@@ -278,7 +282,7 @@ int main()
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);*/
 
 	// Create a GLFWwindow object that we can use for GLFW's functions
-	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Práctica 12: Animacion por keyframes Monserrat Cruces", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Práctica 13: Skybox Monserrat Cruces", nullptr, nullptr);
 
 	if (nullptr == window)
 	{
